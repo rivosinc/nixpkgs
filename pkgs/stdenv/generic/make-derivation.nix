@@ -413,7 +413,7 @@ else let
       enableParallelChecking = attrs.enableParallelChecking or true;
     } // lib.optionalAttrs (hardeningDisable != [] || hardeningEnable != [] || stdenv.hostPlatform.isMusl) {
       NIX_HARDENING_ENABLE = enabledHardeningOptions;
-    } // lib.optionalAttrs (stdenv.hostPlatform.isx86_64 && stdenv.hostPlatform ? gcc.arch) {
+    } // lib.optionalAttrs (stdenv.hostPlatform.isx86_64 && stdenv.hostPlatform ? gcc.arch && stdenv.hostPlatform == stdenv.buildPlatform) {
       requiredSystemFeatures = attrs.requiredSystemFeatures or [] ++ [ "gccarch-${stdenv.hostPlatform.gcc.arch}" ];
     } // lib.optionalAttrs (stdenv.buildPlatform.isDarwin) {
       inherit __darwinAllowLocalNetworking;
