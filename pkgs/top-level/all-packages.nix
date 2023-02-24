@@ -21180,6 +21180,7 @@ with pkgs;
       fetchurl = stdenv.fetchurlBoot;
     };
   };
+  libxcrypt-headers = libxcrypt.override { headersOnly = true; };
 
   libxdg_basedir = callPackage ../development/libraries/libxdg-basedir { };
 

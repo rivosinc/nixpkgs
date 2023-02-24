@@ -1,7 +1,7 @@
-{ lib, stdenv, fetchurl, perl, nixosTests }:
+{ lib, stdenv, stdenvNoCC, buildPackages, fetchurl, perl, nixosTests, headersOnly ? false }:
 
-stdenv.mkDerivation rec {
-  pname = "libxcrypt";
+(if headersOnly then stdenvNoCC else stdenv).mkDerivation rec {
+  pname = "libxcrypt" + lib.optionalString headersOnly "-headers";
   version = "4.4.30";
 
   src = fetchurl {
@@ -11,6 +11,7 @@ stdenv.mkDerivation rec {
 
   outputs = [
     "out"
+  ] ++ lib.optionals (!headersOnly) [
     "man"
   ];
 
@@ -26,9 +27,15 @@ stdenv.mkDerivation rec {
     perl
   ];
 
+  depsBuildBuild = [
+    buildPackages.stdenv.cc
+  ];
+
   enableParallelBuilding = true;
 
-  doCheck = true;
+  installTargets = lib.optional headersOnly "install-nodist_includeHEADERS";
+
+  doCheck = !headersOnly;
 
   passthru.tests = {
     inherit (nixosTests) login shadow;
