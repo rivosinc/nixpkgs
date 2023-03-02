@@ -113,6 +113,7 @@ stdenv.mkDerivation rec {
     }
 
     # Create 'ldd' symlink, builtin
+    mkdir -p $bin/bin
     ln -s $out/lib/libc.so $bin/bin/ldd
 
     # (impure) cc wrapper around musl for interactive usuage
@@ -124,12 +125,14 @@ stdenv.mkDerivation rec {
       --replace $out/lib/musl-gcc.specs $dev/lib/musl-gcc.specs
 
     # provide 'iconv' utility, using just-built headers, libc/ldso
-    $CC ${iconv_c} -o $bin/bin/iconv \
-      -I$dev/include \
-      -L$out/lib -Wl,-rpath=$out/lib \
-      -lc \
-      -B $out/lib \
-      -Wl,-dynamic-linker=$(ls $out/lib/ld-*)
+    # RIVOS: disable this for now, since it causes a loop in the outputs
+    # when the compiler flags are embedded.
+    #$CC ${iconv_c} -o $bin/bin/iconv \
+    #  -I$dev/include \
+    #  -L$out/lib -Wl,-rpath=$out/lib \
+    #  -lc \
+    #  -B $out/lib \
+    #  -Wl,-dynamic-linker=$(ls $out/lib/ld-*)
   '' + lib.optionalString (arch != null) ''
     # Create 'libc.musl-$arch' symlink
     ln -rs $out/lib/libc.so $out/lib/libc.musl-${arch}.so.1
