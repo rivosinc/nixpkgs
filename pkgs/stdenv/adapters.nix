@@ -71,7 +71,8 @@ rec {
       extraBuildInputs = (old.extraBuildInputs or []) ++ [
         (
           if stdenv0.buildPlatform != stdenv0.targetPlatform
-          then pkgs.glibcCross.static
+          # Try to get glibc from the next stage if possible.
+          then (pkgs.targetPackages.glibcCross or pkgs.glibcCross).static
           else pkgs.glibc.static
         )
       ];
