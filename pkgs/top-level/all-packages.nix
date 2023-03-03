@@ -13873,7 +13873,7 @@ with pkgs;
 
   crossLibcStdenv =
     if stdenv.hostPlatform.useLLVM or false || stdenv.hostPlatform.isDarwin
-    then overrideCC stdenv buildPackages.llvmPackages.clangNoLibc
+    then overrideCC stdenv buildPackages.llvmPackages.clangCompilerRtBuiltinsNoLibc
     else gccCrossLibcStdenv;
 
   # The GCC used to build libc for the target platform. Normal gccs will be
