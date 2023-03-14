@@ -2,6 +2,7 @@ self: super: with self;
 
 let
   pythonInterpreter = super.python.pythonForBuild.interpreter;
+  buildPythonPkgs = super.python.pythonForBuild.pkgs;
   pythonSitePackages = super.python.sitePackages;
   pythonCheckInterpreter = super.python.interpreter;
   setuppy = ../run_setup.py;
@@ -149,7 +150,9 @@ in {
       substitutions = {
         inherit pythonInterpreter pythonSitePackages setuppy;
       };
-    } ./setuptools-build-hook.sh) {};
+    } ./setuptools-build-hook.sh) {
+      inherit (buildPythonPkgs) setuptools wheel;
+    };
 
   setuptoolsCheckHook = callPackage ({ makePythonHook, setuptools }:
     makePythonHook {
@@ -181,7 +184,9 @@ in {
     makePythonHook {
       name = "wheel-unpack-hook.sh";
       deps = [ wheel ];
-    } ./wheel-unpack-hook.sh) {};
+    } ./wheel-unpack-hook.sh) {
+      inherit (buildPythonPkgs) wheel;
+    };
 
   wrapPython = callPackage ../wrap-python.nix {
     inherit (pkgs.buildPackages) makeWrapper;
@@ -191,5 +196,7 @@ in {
     makePythonHook {
       name = "python${python.pythonVersion}-sphinx-hook";
       deps = [ sphinx installShellFiles ];
-    } ./sphinx-hook.sh) {};
+    } ./sphinx-hook.sh) {
+      inherit (buildPythonPkgs) sphinx;
+    };
 }
