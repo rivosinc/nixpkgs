@@ -2315,6 +2315,12 @@
     githubId = 3471749;
     name = "Claudio Bley";
   };
+  cbrewster = {
+    email = "cbrewster@hey.com";
+    github = "cbrewster";
+    githubId = 9086315;
+    name = "Connor Brewster";
+  };
   cburstedde = {
     email = "burstedde@ins.uni-bonn.de";
     github = "cburstedde";
@@ -13739,6 +13745,15 @@
       fingerprint = "38A0 29B0 4A7E 4C13 A4BB  86C8 7D51 0786 6B1C 6752";
     }];
   };
+  thekostins = {
+    name = "Konstantin";
+    email = "anisimovkosta19@gmail.com";
+    github = "TheKostins";
+    githubId = 39405421;
+    keys = [{
+      fingerprint = "B216 7B33 E248 097F D82A  991D C94D 589A 4D0D CDD2";
+    }];
+  };
   thelegy = {
     email = "mail+nixos@0jb.de";
     github = "thelegy";
@@ -13954,6 +13969,12 @@
     github = "tmarkovski";
     githubId = 1280118;
     name = "Tomislav Markovski";
+  };
+  tmarkus = {
+    email = "tobias@markus-regensburg.de";
+    github = "hesiod";
+    githubId = 3159881;
+    name = "Tobias Markus";
   };
   tmountain = {
     email = "tinymountain@gmail.com";
