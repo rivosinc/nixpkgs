@@ -31,6 +31,8 @@
     buildPackages.stdenv.cc
   ];
 
+  ${if headersOnly then "CC" else null} = "${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
+
   enableParallelBuilding = true;
 
   installTargets = lib.optional headersOnly "install-nodist_includeHEADERS";
