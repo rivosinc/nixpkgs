@@ -2,11 +2,11 @@
 
 (if headersOnly then stdenvNoCC else stdenv).mkDerivation rec {
   pname = "libxcrypt" + lib.optionalString headersOnly "-headers";
-  version = "4.4.30";
+  version = "4.4.33";
 
   src = fetchurl {
     url = "https://github.com/besser82/libxcrypt/releases/download/v${version}/libxcrypt-${version}.tar.xz";
-    sha256 = "sha256-s2Z/C6hdqtavJGukCQ++UxY62TyLaioSV9IqeLt87ro=";
+    hash = "sha256-6HrPnGUsVzpHE9VYIVn5jzBdVu1fdUzmT1fUGU1rOm8=";
   };
 
   outputs = [
@@ -15,11 +15,16 @@
     "man"
   ];
 
+  ${if (stdenv.hostPlatform != stdenv.buildPlatform) && !headersOnly then "preConfigure" else null}  = ''
+    export CC="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc"
+    export CC_FOR_BUILD="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc"
+  '';
+
   configureFlags = [
     "--enable-hashes=all"
     "--enable-obsolete-api=glibc"
     "--disable-failure-tokens"
-  ] ++ lib.optionals (stdenv.hostPlatform.isMusl || stdenv.hostPlatform.libc == "bionic") [
+  ] ++ lib.optionals (stdenv.hostPlatform.isMusl || stdenv.hostPlatform.libc == "bionic" || stdenv.hostPlatform != stdenv.buildPlatform) [
     "--disable-werror"
   ];
 
@@ -31,7 +36,7 @@
     buildPackages.stdenv.cc
   ];
 
-  ${if headersOnly then "CC" else null} = "${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
+  ${if (headersOnly) then "CC" else null} = "${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc";
 
   enableParallelBuilding = true;
 
