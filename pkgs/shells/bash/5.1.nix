@@ -57,6 +57,11 @@ stdenv.mkDerivation rec {
   patches = upstreamPatches
     ++ [ ./pgrp-pipe-5.1.patch ];
 
+  ${if stdenv.hostPlatform != stdenv.buildPlatform then "preConfigure" else null}  = ''
+    export CC="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc"
+    export CC_FOR_BUILD="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc"
+  '';
+
   configureFlags = [
     (if interactive then "--with-installed-readline" else "--disable-readline")
   ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [

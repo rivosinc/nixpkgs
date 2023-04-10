@@ -423,6 +423,14 @@ in
             echo "-isystem $dir" >> $out/nix-support/libcxx-cxxflags
           done
         ''
+        + optionalString (libcxx == null && (isGNU && cc.langCC or false) && (hostPlatform != targetPlatform)) ''
+          for dir in ${cc}${lib.optionalString (hostPlatform != targetPlatform) "/${targetPlatform.config}"}/include/c++/*; do
+            echo "-isystem $dir" >> $out/nix-support/libcxx-cxxflags
+          done
+          for dir in ${cc}${lib.optionalString (hostPlatform != targetPlatform) "/${targetPlatform.config}"}/include/c++/*/${targetPlatform.config}; do
+            echo "-isystem $dir" >> $out/nix-support/libcxx-cxxflags
+          done
+        ''
         + optionalString (libcxx.isLLVM or false) ''
           echo "-isystem ${lib.getDev libcxx}/include/c++/v1" >> $out/nix-support/libcxx-cxxflags
           echo "-stdlib=libc++" >> $out/nix-support/libcxx-ldflags

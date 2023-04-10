@@ -84,6 +84,11 @@ stdenv.mkDerivation rec {
            -e '/CPPFLAGS="$CPPFLAGS/s/ -D_XOPEN_SOURCE_EXTENDED//' \
         configure
     CFLAGS=-D_XOPEN_SOURCE_EXTENDED
+  ''
+  + lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
+    export CC="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc"
+    export CXX="${stdenv.cc}/bin/${stdenv.cc.targetPrefix}c++"
+    export CC_FOR_BUILD="${buildPackages.stdenv.cc}/bin/${buildPackages.stdenv.cc.targetPrefix}cc"
   '';
 
   enableParallelBuilding = true;
