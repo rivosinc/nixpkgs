@@ -27,6 +27,8 @@ buildPythonPackage rec {
     sha256 = "sha256-/1YOnG6sCP8G8J3K2/RycTC95rXW9M+U3Mjz4GCt13s=";
   };
 
+  GSSAPI_SUPPORT_DETECT = false;
+
   # It's used to locate headers
   postPatch = ''
     substituteInPlace setup.py \
