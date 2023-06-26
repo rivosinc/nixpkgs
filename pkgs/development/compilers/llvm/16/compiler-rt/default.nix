@@ -1,7 +1,9 @@
 { lib, stdenv, llvm_meta, version
 , monorepoSrc, runCommand
-, cmake, ninja, python3, xcbuild, libllvm, libcxxabi, libxcrypt
+, cmake, ninja, python3, xcbuild, libllvm, libcxxabi
+, buildPackages, linuxHeaders
 , doFakeLibgcc ? stdenv.hostPlatform.isFreeBSD
+, builtinsOnly ? false,
 }:
 
 let
@@ -29,7 +31,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ cmake ninja python3 libllvm.dev ]
     ++ lib.optional stdenv.isDarwin xcbuild.xcrun;
-  buildInputs = lib.optional stdenv.hostPlatform.isDarwin libcxxabi;
+  buildInputs = lib.optional stdenv.hostPlatform.isLinux linuxHeaders ++ lib.optional stdenv.hostPlatform.isDarwin libcxxabi;
 
   env.NIX_CFLAGS_COMPILE = toString [
     "-DSCUDO_DEFAULT_OPTIONS=DeleteSizeMismatch=0:DeallocationTypeMismatch=0"
@@ -40,8 +42,8 @@ stdenv.mkDerivation {
     "-DCMAKE_C_COMPILER_TARGET=${stdenv.hostPlatform.config}"
     "-DCMAKE_ASM_COMPILER_TARGET=${stdenv.hostPlatform.config}"
   ] ++ lib.optionals (haveLibc && stdenv.hostPlatform.libc == "glibc") [
-    "-DSANITIZER_COMMON_CFLAGS=-I${libxcrypt}/include"
-  ] ++ lib.optionals (useLLVM || bareMetal || isMusl) [
+    "-DSANITIZER_COMMON_CFLAGS=-I${buildPackages.libxcrypt}/include"
+  ] ++ lib.optionals (useLLVM || bareMetal || isMusl || builtinsOnly) [
     "-DCOMPILER_RT_BUILD_SANITIZERS=OFF"
     "-DCOMPILER_RT_BUILD_XRAY=OFF"
     "-DCOMPILER_RT_BUILD_LIBFUZZER=OFF"
@@ -72,6 +74,13 @@ stdenv.mkDerivation {
     "-DCOMPILER_RT_ENABLE_IOS=OFF"
   ];
 
+  # Prevent a circular dependency by using libxcrypt headers from buildPackages.
+  # compiler-rt should never link against libxcrypt, and doubly so against
+  # libxcrypt from a potentially incompatible package set.
+  disallowedReferences = lib.optionals (haveLibc && stdenv.hostPlatform.libc == "glibc") [
+    buildPackages.libxcrypt
+  ];
+
   outputs = [ "out" "dev" ];
 
   patches = [
@@ -99,11 +108,12 @@ stdenv.mkDerivation {
   '' + lib.optionalString stdenv.isDarwin ''
     substituteInPlace cmake/config-ix.cmake \
       --replace 'set(COMPILER_RT_HAS_TSAN TRUE)' 'set(COMPILER_RT_HAS_TSAN FALSE)'
-  '' + lib.optionalString (useLLVM) ''
+  '' + lib.optionalString ((useLLVM && !haveLibc) || builtinsOnly) ''
     substituteInPlace lib/builtins/int_util.c \
       --replace "#include <stdlib.h>" ""
     substituteInPlace lib/builtins/clear_cache.c \
-      --replace "#include <assert.h>" ""
+      --replace "#include <assert.h>" "" \
+      --replace "assert(start_reg == 0 && \"Cache flush syscall failed.\");" ""
     substituteInPlace lib/builtins/cpu_model.c \
       --replace "#include <assert.h>" ""
   '';

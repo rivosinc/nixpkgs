@@ -262,6 +262,29 @@ in let
         ++ lib.optional stdenv.targetPlatform.isWasm "-fno-exceptions";
     };
 
+    clangNoLibcxxLibunwind = wrapCCWith rec {
+      cc = tools.clang-unwrapped;
+      libcxx = null;
+      bintools = bintools';
+      extraPackages = [
+        targetLlvmLibraries.compiler-rt
+      ]
+      ++ lib.optionals (stdenv.targetPlatform.useLLVM or false && !stdenv.targetPlatform.isWasm) [
+        targetLlvmLibraries.libunwind
+      ];
+      extraBuildCommands = mkExtraBuildCommands cc;
+      nixSupport.cc-cflags = [
+        "-rtlib=compiler-rt"
+        "-B${targetLlvmLibraries.compiler-rt}/lib"
+        "-nostdlib++"
+      ]
+      ++ lib.optionals (stdenv.targetPlatform.useLLVM or false && !stdenv.targetPlatform.isWasm) [
+        "--unwindlib=libunwind"
+        "-lunwind"
+      ]
+      ++ lib.optional stdenv.targetPlatform.isWasm "-fno-exceptions";
+    };
+
     clangNoLibcxx = wrapCCWith rec {
       cc = tools.clang-unwrapped;
       libcxx = null;
@@ -274,7 +297,8 @@ in let
         "-rtlib=compiler-rt"
         "-B${targetLlvmLibraries.compiler-rt}/lib"
         "-nostdlib++"
-      ];
+      ]
+      ++ lib.optional stdenv.targetPlatform.isWasm "-fno-exceptions";
     };
 
     clangNoLibc = wrapCCWith rec {
@@ -288,6 +312,25 @@ in let
       nixSupport.cc-cflags = [
         "-rtlib=compiler-rt"
         "-B${targetLlvmLibraries.compiler-rt}/lib"
+      ];
+    };
+
+    clangCompilerRtBuiltinsNoLibc = wrapCCWith rec {
+      cc = tools.clang-unwrapped;
+      libcxx = null;
+      bintools = bintoolsNoLibc';
+      extraPackages = [
+        targetLlvmLibraries.compiler-rt-builtins
+      ];
+      extraBuildCommands =
+        mkExtraBuildCommands0 cc
+        + ''
+          ln -s "${targetLlvmLibraries.compiler-rt-builtins.out}/lib" "$rsrc/lib"
+          ln -s "${targetLlvmLibraries.compiler-rt-builtins.out}/share" "$rsrc/share"
+        '';
+      nixSupport.cc-cflags = [
+        "-rtlib=compiler-rt"
+        "-B${targetLlvmLibraries.compiler-rt-builtins}/lib"
       ];
     };
 
@@ -328,8 +371,16 @@ in let
                else stdenv;
     };
 
-    # N.B. condition is safe because without useLLVM both are the same.
-    compiler-rt = if stdenv.hostPlatform.isAndroid
+    compiler-rt-builtins = callPackage ./compiler-rt {
+      inherit llvm_meta;
+      stdenv =
+        if stdenv.hostPlatform.useLLVM or stdenv.cc.isClang or false
+        then overrideCC stdenv buildLlvmTools.clangNoCompilerRt
+        else stdenv;
+      builtinsOnly = true;
+    };
+
+    compiler-rt = if stdenv.cc.libc != null
       then libraries.compiler-rt-libc
       else libraries.compiler-rt-no-libc;
 
@@ -369,7 +420,9 @@ in let
       #
       # We cannot use `clangNoLibcxx` because that contains `compiler-rt` which,
       # on macOS, depends on `libcxxabi`, thus forming a cycle.
-      stdenv_ = overrideCC stdenv buildLlvmTools.clangNoCompilerRtWithLibc;
+      stdenv_ = if stdenv.hostPlatform.isDarwin
+      then overrideCC stdenv buildLlvmTools.clangNoCompilerRtWithLibc
+      else overrideCC stdenv buildLlvmTools.clangNoLibcxxLibunwind;
     in callPackage ./libcxxabi {
       stdenv = stdenv_;
       inherit llvm_meta cxx-headers;
@@ -380,7 +433,7 @@ in let
     # stdenv's compiler.
     libcxx = callPackage ./libcxx {
       inherit llvm_meta;
-      stdenv = overrideCC stdenv buildLlvmTools.clangNoLibcxx;
+      stdenv = overrideCC stdenv buildLlvmTools.clangNoLibcxxLibunwind;
     };
 
     libunwind = callPackage ./libunwind {

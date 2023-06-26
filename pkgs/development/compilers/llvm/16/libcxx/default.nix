@@ -47,8 +47,6 @@ stdenv.mkDerivation rec {
 
   patches = [
     ./gnu-install-dirs.patch
-  ] ++ lib.optionals stdenv.hostPlatform.isMusl [
-    ../../libcxx-0001-musl-hacks.patch
   ];
 
   postPatch = ''
