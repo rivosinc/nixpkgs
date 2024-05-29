@@ -6,7 +6,6 @@
 
   # build-system
   cython,
-  gfortran,
   numpy,
   scipy,
   setuptools,
@@ -48,7 +47,6 @@ buildPythonPackage rec {
   ] ++ lib.optionals stdenv.cc.isClang [ llvmPackages.openmp ];
 
   nativeBuildInputs = [
-    gfortran
     pythonRelaxDepsHook
   ];
 
