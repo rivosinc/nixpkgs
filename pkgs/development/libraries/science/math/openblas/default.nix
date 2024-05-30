@@ -164,6 +164,8 @@ stdenv.mkDerivation rec {
   postPatch = ''
     # cc1: error: invalid feature modifier 'sve2' in '-march=armv8.5-a+sve+sve2+bf16'
     substituteInPlace Makefile.arm64 --replace "+sve2+bf16" ""
+
+    substituteInPlace Makefile.riscv64 --replace "-static" ""
   '';
 
   inherit blas64;
