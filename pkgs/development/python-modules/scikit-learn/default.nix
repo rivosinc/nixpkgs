@@ -72,7 +72,10 @@ buildPythonPackage rec {
     pytest-xdist
   ];
 
-  env.LC_ALL = "en_US.UTF-8";
+  env = {
+    LC_ALL = "en_US.UTF-8";
+    ${if stdenv.hostPlatform != stdenv.buildPlatform then "PYTHON_CROSSENV" else null} = "1";
+  };
 
   preBuild = ''
     export SKLEARN_BUILD_PARALLEL=$NIX_BUILD_CORES
